@@ -1,0 +1,67 @@
+edition = "2023";
+
+package pact.telegram;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "pactTestTask/pkg/pb";
+
+
+// Сервис, который устанавливает и поддерживает несколько независимых
+// соединений с Telegram через библиотеку gotd.
+// Сервис позволяет:
+// • динамически создавать и удалять соединения,
+// • отправлять текстовые сообщения,
+// • получать текстовые сообщения.
+service TelegramService {
+// При создании соединения сервис запускает процесс авторизации через QR и возвращает
+// данные для генерации QR кода. После этого пользователь:
+// 1. Открывает Telegram на телефоне.
+// 2. Переходит в Settings → Devices → Scan QR.
+// 3. Сканирует QR-код.
+  rpc CreateSession(CreateSessionRequest) returns (CreateSessionResponse);
+// Операция удаления соединения останавливает клиент Telegram и освобождает связанные
+// ресурсы. Также можно вызвать метод auth.logOut, если авторизация была завершена.
+  rpc DeleteSession(DeleteSessionRequest) returns (DeleteSessionResponse);
+// Сервис позволяет отправлять текстовое сообщение через соответствующее Telegram-
+// соединение после завершения авторизации. Сообщения можно отправлять одновременно.
+  rpc SendMessage(SendMessageRequest) returns (SendMessageResponse);
+// Сервис предоставляет возможность получения входящих текстовых сообщений для
+// конкретного соединения. Сообщение содержит идентификатор отправителя, текст,
+// время отправки и ID сообщения.
+  rpc SubscribeMessages(SubscribeMessagesRequest) returns (stream MessageUpdate);
+}
+
+message CreateSessionRequest {}
+
+message CreateSessionResponse {
+  string session_id = 1;
+  string qr_code = 2;
+}
+
+message DeleteSessionRequest {
+  string session_id = 1;
+}
+
+message DeleteSessionResponse {}
+
+message SendMessageRequest {
+  string session_id = 1;
+  string peer = 2;
+  string text = 3;
+}
+
+message SendMessageResponse {
+  int64 message_id = 1;
+}
+
+message SubscribeMessagesRequest {
+  string session_id = 1;
+}
+
+message MessageUpdate {
+  int64 message_id = 1;
+  string from = 2;
+  string text = 3;
+  int64 timestamp = 4; 
+}
